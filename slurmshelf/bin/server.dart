@@ -8,7 +8,9 @@ import 'package:shelf_router/shelf_router.dart';
 final _router = Router()
   ..get('/', _rootHandler)
   ..get('/echo/<message>', _echoHandler)
-  ..get('/squeue', _squeueHandler);
+  ..get('/squeue', _squeueHandler)
+  ..get('/squeue/<id>/stdout', _stdoutHandler)
+  ..post('/scancel', _scancelHandler);
 
 Response _rootHandler(Request req) {
   return Response.ok('Hello, World!\n');
@@ -22,6 +24,19 @@ Response _echoHandler(Request request) {
 Future<Response> _squeueHandler(Request request) async {
   final squeue = await Process.run('squeue', ['--json']);
   return Response.ok(squeue.stdout);
+}
+
+Future<Response> _stdoutHandler(Request request) async {
+  final squeue = await Process.run('squeue', ['--json']);
+  final List<dynamic> jobs = squeue.stdout['jobs'];
+  final path = jobs.firstWhere((job) => job['job_id'] == request.params['id'])['standard_output'];
+  final stdOut = await File(path).readAsString();
+  return Response.ok(stdOut);
+}
+
+Future<Response> _scancelHandler(Request request) async {
+  final scancel = await Process.run('scancel', [request.params['id'] ?? '']);
+  return Response.ok(scancel.stdout);
 }
 
 void main(List<String> args) async {
