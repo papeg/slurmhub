@@ -11,6 +11,11 @@ class SqueueCubit extends Cubit<List<SqueueJob>> {
   
   void fetch() async => emit(await repo.getSqueueJobs());
   
+  void cancel(int id) async {
+    await repo.cancelJob(id);
+    emit(await repo.getSqueueJobs());
+  }
+  
   @override
   void onChange(Change<List<SqueueJob>> change) {
     super.onChange(change);
@@ -22,4 +27,10 @@ class SqueueCubit extends Cubit<List<SqueueJob>> {
     super.onError(error, stackTrace);
     log.e('$error, $stackTrace');
   }
+}
+
+class JobCubit extends Cubit<SqueueJob> {
+  final SqueueRepository repo;
+  final SqueueJob job; 
+  JobCubit(this.repo, this.job) : super(job);
 }
